@@ -11,36 +11,6 @@ import java.util.Locale;
 import static io.restassured.RestAssured.given;
 
 public class DataGenerator {
-    private DataGenerator() {
-    }
-
-    public static class ValidUser {
-        public ValidUser() {
-        }
-
-        public static RegistrationDto generateValidUser() {
-            return new RegistrationDto(
-                    "vasya",
-                    "password",
-                    "active"
-            );
-        }
-    }
-
-    public static class InvalidUser {
-        private InvalidUser() {
-        }
-        public static RegistrationDto generateInvalidUser(String locale) {
-            Faker faker = new Faker(new Locale(locale));
-            return new RegistrationDto(
-                    faker.name().username(),
-                    faker.internet().password(),
-                    "blocked"
-            );
-        }
-
-    }
-
     public static RequestSpecification requestSpec = new RequestSpecBuilder()
             .setBaseUri("http://localhost")
             .setPort(9999)
@@ -49,21 +19,39 @@ public class DataGenerator {
             .log(LogDetail.ALL)
             .build();
 
-    void setUpValid() {
-        given().spec(requestSpec)
-                .body(new ValidUser())
-        .when()
-                .post("/api/system/users")
-        .then()
-                 .statusCode(200);
+    private DataGenerator() {
     }
 
-    void setUpInvalid() {
+    public static void setupUser(RegistrationDto registrationDto) {
         given().spec(requestSpec)
-                .body(new InvalidUser())
+                .body(registrationDto)
                 .when()
                 .post("/api/system/users")
                 .then()
                 .statusCode(200);
     }
+
+    public static String getLogin(String locale) {
+        Faker faker = new Faker(new Locale(locale));
+        return faker.name().username();
+    }
+
+    public static String getPassword(String locale) {
+        Faker faker = new Faker(new Locale(locale));
+        return faker.internet().password();
+    }
+
+    public static RegistrationDto generateValidUser(String locale) {
+        RegistrationDto registrationDto = new RegistrationDto(getLogin(locale), getPassword(locale), "active");
+        setupUser(registrationDto);
+        return registrationDto;
+    }
+
+    public static RegistrationDto generateInvalidUser(String locale) {
+        RegistrationDto registrationDto = new RegistrationDto(getLogin(locale), getPassword(locale), "blocked");
+        setupUser(registrationDto);
+        return registrationDto;
+    }
+
+
 }
